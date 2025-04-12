@@ -18,59 +18,70 @@
   </style>
 </head>
 <body>
-  <div class="container my-5">
-    <h2 class="mb-4">แบบฟอร์มรายละเอียดตัวละคร</h2>
-    <p><a href="#" data-bs-toggle="modal" data-bs-target="#tosModal">เงื่อนไขการใช้บริการ (ToS)</a></p>
+   <div class="container my-5">
+    <div class="card shadow">
+      <div class="card-body">
+        <h2 class="card-title mb-4">แบบฟอร์มรายละเอียดตัวละคร</h2>
+        
+        <!-- Terms of Service (ToS) Link -->
+        <div>
+          <span class="tos-link" data-bs-toggle="modal" data-bs-target="#tosModal">เงื่อนไขการใช้บริการ (ToS)</span>
+        </div>
 
-    <form id="characterForm">
-      <div class="mb-3">
-        <label for="customerName" class="form-label">ชื่อผู้จ้าง*</label>
-        <input type="text" class="form-control" id="customerName" required>
-      </div>
-      <div class="mb-3">
-        <label for="characterName" class="form-label">ชื่อตัวละคร</label>
-        <input type="text" class="form-control" id="characterName">
-      </div>
-      <div class="mb-3">
-        <label for="characterDetail" class="form-label">รายละเอียดตัวละคร*</label>
-        <textarea class="form-control" id="characterDetail" rows="3" required></textarea>
-      </div>
-      <div class="mb-3">
-        <label for="characterFocus" class="form-label">มีอะไรต้องเน้นเป็นพิเศษไหม?</label>
-        <textarea class="form-control" id="characterFocus" rows="2"></textarea>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">ภาพประกอบ</label>
-        <input type="file" id="imageUpload" class="form-control" accept="image/*" multiple>
-        <div id="imagePreview" class="d-flex flex-wrap gap-2 mt-2"></div>
-      </div>
-      <div class="d-flex gap-2">
-        <button type="button" id="previewBtn" class="btn btn-primary">แสดงตัวอย่าง</button>
-        <button type="button" id="downloadBtn" class="btn btn-success" disabled>บันทึกภาพ</button>
-        <button type="button" id="copyBtn" class="btn btn-secondary" disabled>Copy to Clipboard</button>
-      </div>
-    </form>
+        <form id="quoteForm">
+          <div class="mb-3">
+            <label for="name" class="form-label">ชื่อผู้จ้าง*</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+          </div>
 
-    <div id="previewSection" class="mt-5 d-none">
-      <h3 class="mb-3">รายละเอียดตัวละคร</h3>
-      <div id="previewContent" class="border p-3"></div>
+          <div class="mb-3">
+            <label for="characterName" class="form-label">ชื่อตัวละคร</label>
+            <input type="text" class="form-control" id="characterName" name="characterName">
+          </div>
+
+          <div class="mb-3">
+            <label for="desc" class="form-label">รายละเอียดตัวละคร*</label>
+            <textarea class="form-control" id="desc" name="desc" rows="4" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="focus" class="form-label">มีอะไรต้องเน้นเป็นพิเศษไหม?</label>
+            <textarea class="form-control" id="focus" name="focus" rows="2"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">ภาพประกอบ</label>
+            <input type="file" class="form-control" id="upload" accept="image/*" multiple>
+            <div id="imageGallery" class="mt-2 d-flex flex-wrap" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+          </div>
+
+          <button type="button" class="btn btn-primary me-2" onclick="generatePreview()">แสดงตัวอย่าง</button>
+          <button type="button" class="btn btn-success me-2" onclick="saveAsImage()" id="saveBtn">บันทึกภาพ</button>
+          <button type="button" class="btn btn-secondary" onclick="copyToClipboard()" id="copyBtn">Copy to Clipboard</button>
+        </form>
+
+        <div class="preview-area mt-4 p-3 border rounded bg-light" id="preview" style="display:none;"></div>
+      </div>
     </div>
   </div>
 
-  <!-- Modal: ToS -->
+  <!-- TOS Modal -->
   <div class="modal fade" id="tosModal" tabindex="-1" aria-labelledby="tosModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="tosModalLabel">เงื่อนไขการใช้งาน</h5>
+          <h5 class="modal-title" id="tosModalLabel">เงื่อนไขการใช้บริการ (ToS)</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <ul>
-            <li>ใช้สำหรับแปลงฟอร์มเป็นภาพเท่านั้น</li>
+            <li>ใช้สำหรับแปลงฟอร์มเป็นภาพ เท่านั้น</li>
             <li>ไม่มีค่าใช้จ่าย</li>
             <li>ไม่ได้เก็บข้อมูลของผู้ใช้</li>
           </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
         </div>
       </div>
     </div>
