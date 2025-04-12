@@ -1,91 +1,93 @@
-// Handle multiple image uploads
-document.getElementById("imageUpload").addEventListener("change", function (event) {
+document.getElementById('imageUpload').addEventListener('change', handleImageUpload);
+document.getElementById('previewBtn').addEventListener('click', generatePreview);
+document.getElementById('downloadBtn').addEventListener('click', downloadImage);
+document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
+
+let uploadedImages = [];
+
+function handleImageUpload(event) {
   const files = event.target.files;
-  const previewContainer = document.getElementById("imagePreview");
-  previewContainer.innerHTML = ""; // Clear previous previews
+  const previewContainer = document.getElementById('imagePreview');
+  previewContainer.innerHTML = '';
 
-  Array.from(files).forEach(file => {
-    if (file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const imgElement = document.createElement("img");
-        imgElement.src = e.target.result;
-        imgElement.style.maxWidth = "300px";
-        imgElement.style.maxHeight = "300px";
-        imgElement.style.objectFit = "contain";
-        imgElement.classList.add("img-thumbnail");
+  for (const file of files) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const img = new Image();
+      img.src = e.target.result;
+      img.classList.add('img-fluid', 'preview-image');
+      img.setAttribute('data-index', uploadedImages.length);
 
-        const imgWrapper = document.createElement("div");
-        imgWrapper.classList.add("position-relative");
-        imgWrapper.style.marginBottom = "10px";
-        imgWrapper.appendChild(imgElement);
-
-        // Add a remove button for each image
-        const removeBtn = document.createElement("button");
-        removeBtn.classList.add("btn", "btn-danger", "position-absolute", "top-0", "end-0");
-        removeBtn.textContent = "X";
-        removeBtn.addEventListener("click", function () {
-          imgWrapper.remove();
-        });
-
-        imgWrapper.appendChild(removeBtn);
-        previewContainer.appendChild(imgWrapper);
+      // Create a remove button for each image
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = 'Remove';
+      removeBtn.classList.add('btn', 'btn-danger', 'remove-btn');
+      removeBtn.onclick = function () {
+        removeImage(img, uploadedImages.length);
       };
-      reader.readAsDataURL(file);
-    }
-  });
-});
 
-// Enable the "แสดงตัวอย่าง" button only when the required fields are filled
-document.getElementById("previewBtn").addEventListener("click", function () {
-  const customerName = document.getElementById("customerName").value;
-  const characterDetail = document.getElementById("characterDetail").value;
-  const imageCount = document.getElementById("imagePreview").children.length;
+      // Append image and remove button
+      const imgWrapper = document.createElement('div');
+      imgWrapper.classList.add('preview-wrapper');
+      imgWrapper.appendChild(img);
+      imgWrapper.appendChild(removeBtn);
+      previewContainer.appendChild(imgWrapper);
 
-  if (customerName && characterDetail && imageCount > 0) {
-    // Create the preview content
-    const previewContent = document.getElementById("previewContent");
-    previewContent.innerHTML = `
-      <p><strong>ชื่อผู้จ้าง:</strong> ${customerName}</p>
-      <p><strong>ชื่อตัวละคร:</strong> ${document.getElementById("characterName").value}</p>
-      <p><strong>รายละเอียดตัวละคร:</strong> ${characterDetail}</p>
-      <p><strong>มีอะไรต้องเน้นเป็นพิเศษไหม?</strong> ${document.getElementById("characterFocus").value}</p>
-      <div class="d-flex flex-wrap gap-2">
-        ${Array.from(document.getElementById("imagePreview").children).map(child => {
-          const imgSrc = child.querySelector("img").src;
-          return `<img src="${imgSrc}" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">`;
-        }).join('')}
-      </div>
-    `;
-    document.getElementById("previewSection").classList.remove("d-none");
-    document.getElementById("downloadBtn").disabled = false;
-    document.getElementById("copyBtn").disabled = false;
-  } else {
-    alert("กรุณากรอกข้อมูลที่จำเป็นและอัพโหลดภาพ");
+      // Add image to the uploadedImages array
+      uploadedImages.push(img);
+    };
+    reader.readAsDataURL(file);
   }
-});
+}
 
-// Handle download image as JPG
-document.getElementById("downloadBtn").addEventListener("click", function () {
-  const previewContent = document.getElementById("previewContent");
-  html2canvas(previewContent).then(canvas => {
-    const image = canvas.toDataURL("image/jpeg");
-    const link = document.createElement("a");
-    link.href = image;
-    link.download = "character-details.jpg";
+function removeImage(img, index) {
+  const previewContainer = document.getElementById('imagePreview');
+  previewContainer.removeChild(img.parentElement);  // Remove image wrapper
+
+  // Remove the image from the array
+  uploadedImages.splice(index, 1);
+}
+
+function generatePreview() {
+  const previewContent = document.getElementById('previewContent');
+  const previewSection = document.getElementById('previewSection');
+
+  previewContent.innerHTML = '';
+  uploadedImages.forEach((img) => {
+    const imgClone = img.cloneNode();
+    imgClone.style.width = 'auto';
+    imgClone.style.height = 'auto';  // Show original size, but will be compressed
+    previewContent.appendChild(imgClone);
+  });
+
+  previewSection.classList.remove('d-none');
+  document.getElementById('downloadBtn').disabled = false;
+  document.getElementById('copyBtn').disabled = false;
+}
+
+function downloadImage() {
+  html2canvas(document.getElementById('previewContent'), {
+    backgroundColor: null,
+    scale: 1,  // Adjust scale for compression
+  }).then(function (canvas) {
+    const img = canvas.toDataURL('image/jpeg', 0.7);  // Compress to JPEG at 70% quality
+    const link = document.createElement('a');
+    link.href = img;
+    link.download = 'character_preview.jpg';
     link.click();
   });
-});
+}
 
-// Handle copy to clipboard
-document.getElementById("copyBtn").addEventListener("click", function () {
-  const previewContent = document.getElementById("previewContent");
-  html2canvas(previewContent).then(canvas => {
-    canvas.toBlob(blob => {
-      const data = [new ClipboardItem({ "image/jpeg": blob })];
-      navigator.clipboard.write(data).then(() => {
-        alert("ภาพได้ถูกคัดลอกไปที่คลิปบอร์ด");
+function copyToClipboard() {
+  html2canvas(document.getElementById('previewContent'), {
+    backgroundColor: null,
+    scale: 1,
+  }).then(function (canvas) {
+    canvas.toBlob(function (blob) {
+      const item = new ClipboardItem({
+        'image/png': blob,
       });
+      navigator.clipboard.write([item]);
     });
   });
-});
+}
