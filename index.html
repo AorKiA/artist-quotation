@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ใบเสนอราคาค่าคอมมิชชัน</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+      background: #f4f4f4;
+    }
+    .container {
+      max-width: 600px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    input, textarea, select {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    label {
+      font-weight: bold;
+    }
+    #preview img {
+      max-width: 100%;
+      margin-top: 10px;
+    }
+    .btn {
+      padding: 10px 15px;
+      margin: 5px 0;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn:disabled {
+      background: #ccc;
+    }
+    .preview-area {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>แบบฟอร์มใบเสนอราคาค่าคอมมิชชัน</h2>
+    <form id="quoteForm">
+      <label for="name">ชื่อลูกค้า</label>
+      <input type="text" id="name" name="name" required>
+
+      <label for="desc">รายละเอียดงาน</label>
+      <textarea id="desc" name="desc" required></textarea>
+
+      <label for="price">ราคา (บาท)</label>
+      <input type="number" id="price" name="price" required>
+
+      <label for="upload">แนบไฟล์ภาพตัวอย่าง (ถ้ามี)</label>
+      <input type="file" id="upload" accept="image/*">
+
+      <label><input type="checkbox" id="tos" required> ยอมรับเงื่อนไขและข้อตกลง (TOS)</label><br>
+
+      <button type="button" class="btn" onclick="generatePreview()">แสดงตัวอย่างก่อนพิมพ์</button>
+      <button type="button" class="btn" onclick="printQuote()" disabled id="printBtn">พิมพ์เป็น PDF หรือรูป</button>
+    </form>
+
+    <div class="preview-area" id="preview" style="display:none;"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+    function generatePreview() {
+      const name = document.getElementById('name').value;
+      const desc = document.getElementById('desc').value;
+      const price = document.getElementById('price').value;
+      const upload = document.getElementById('upload').files[0];
+      const tos = document.getElementById('tos').checked;
+
+      if (!tos) {
+        alert("กรุณายอมรับเงื่อนไขก่อนพิมพ์");
+        return;
+      }
+
+      const preview = document.getElementById('preview');
+      preview.innerHTML = `
+        <h3>ใบเสนอราคา</h3>
+        <p><strong>ลูกค้า:</strong> ${name}</p>
+        <p><strong>รายละเอียด:</strong><br>${desc.replace(/\n/g, '<br>')}</p>
+        <p><strong>ราคา:</strong> ${price} บาท</p>
+      `;
+
+      if (upload) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(upload);
+      }
+
+      preview.style.display = 'block';
+      document.getElementById('printBtn').disabled = false;
+    }
+
+    function printQuote() {
+      const preview = document.getElementById('preview');
+      html2canvas(preview).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'quotation.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+  </script>
+</body>
+</html>
