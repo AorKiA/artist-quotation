@@ -1,0 +1,51 @@
+body {
+  background: #f4f4f4;
+  font-family: 'Noto Sans Thai', sans-serif;
+}
+
+.preview-area img {
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 10px;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+}
+
+.image-thumb {
+  position: relative;
+  display: inline-block;
+  margin: 5px;
+}
+
+.image-thumb img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 5px;
+  cursor: move;
+  border: 2px solid #ddd;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.modal-content {
+  font-family: 'Noto Sans Thai', sans-serif;
+}
+
+.tos-link {
+  cursor: pointer;
+  color: #007bff;
+  text-decoration: underline;
+}
