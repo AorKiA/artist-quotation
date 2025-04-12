@@ -1,106 +1,91 @@
-// script.js
+// Handle multiple image uploads
+document.getElementById("imageUpload").addEventListener("change", function (event) {
+  const files = event.target.files;
+  const previewContainer = document.getElementById("imagePreview");
+  previewContainer.innerHTML = ""; // Clear previous previews
 
-let images = [];
+  Array.from(files).forEach(file => {
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const imgElement = document.createElement("img");
+        imgElement.src = e.target.result;
+        imgElement.style.maxWidth = "300px";
+        imgElement.style.maxHeight = "300px";
+        imgElement.style.objectFit = "contain";
+        imgElement.classList.add("img-thumbnail");
 
-const imageUpload = document.getElementById('imageUpload');
-const imagePreview = document.getElementById('imagePreview');
-const previewBtn = document.getElementById('previewBtn');
-const downloadBtn = document.getElementById('downloadBtn');
-const copyBtn = document.getElementById('copyBtn');
-const previewContent = document.getElementById('previewContent');
-const previewSection = document.getElementById('previewSection');
+        const imgWrapper = document.createElement("div");
+        imgWrapper.classList.add("position-relative");
+        imgWrapper.style.marginBottom = "10px";
+        imgWrapper.appendChild(imgElement);
 
-const requiredCheck = true;
+        // Add a remove button for each image
+        const removeBtn = document.createElement("button");
+        removeBtn.classList.add("btn", "btn-danger", "position-absolute", "top-0", "end-0");
+        removeBtn.textContent = "X";
+        removeBtn.addEventListener("click", function () {
+          imgWrapper.remove();
+        });
 
-imageUpload.addEventListener('change', (e) => {
-  const files = Array.from(e.target.files);
-  for (const file of files) {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const imgContainer = document.createElement('div');
-      imgContainer.className = 'position-relative';
+        imgWrapper.appendChild(removeBtn);
+        previewContainer.appendChild(imgWrapper);
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+});
 
-      const img = document.createElement('img');
-      img.src = event.target.result;
-      img.className = 'img-thumbnail';
-      img.style.maxWidth = '100px';
+// Enable the "แสดงตัวอย่าง" button only when the required fields are filled
+document.getElementById("previewBtn").addEventListener("click", function () {
+  const customerName = document.getElementById("customerName").value;
+  const characterDetail = document.getElementById("characterDetail").value;
+  const imageCount = document.getElementById("imagePreview").children.length;
 
-      const removeBtn = document.createElement('button');
-      removeBtn.innerText = '✕';
-      removeBtn.className = 'btn btn-sm btn-danger position-absolute top-0 end-0';
-      removeBtn.addEventListener('click', () => {
-        const index = images.findIndex(i => i === imgContainer);
-        if (index > -1) {
-          images.splice(index, 1);
-        }
-        imgContainer.remove();
-      });
-
-      imgContainer.appendChild(img);
-      imgContainer.appendChild(removeBtn);
-      imagePreview.appendChild(imgContainer);
-      images.push(imgContainer);
-    };
-    reader.readAsDataURL(file);
+  if (customerName && characterDetail && imageCount > 0) {
+    // Create the preview content
+    const previewContent = document.getElementById("previewContent");
+    previewContent.innerHTML = `
+      <p><strong>ชื่อผู้จ้าง:</strong> ${customerName}</p>
+      <p><strong>ชื่อตัวละคร:</strong> ${document.getElementById("characterName").value}</p>
+      <p><strong>รายละเอียดตัวละคร:</strong> ${characterDetail}</p>
+      <p><strong>มีอะไรต้องเน้นเป็นพิเศษไหม?</strong> ${document.getElementById("characterFocus").value}</p>
+      <div class="d-flex flex-wrap gap-2">
+        ${Array.from(document.getElementById("imagePreview").children).map(child => {
+          const imgSrc = child.querySelector("img").src;
+          return `<img src="${imgSrc}" class="img-thumbnail" style="max-width: 150px; max-height: 150px;">`;
+        }).join('')}
+      </div>
+    `;
+    document.getElementById("previewSection").classList.remove("d-none");
+    document.getElementById("downloadBtn").disabled = false;
+    document.getElementById("copyBtn").disabled = false;
+  } else {
+    alert("กรุณากรอกข้อมูลที่จำเป็นและอัพโหลดภาพ");
   }
 });
 
-new Sortable(imagePreview, {
-  animation: 150,
-  onEnd: () => {
-    images = Array.from(imagePreview.children);
-  }
-});
-
-previewBtn.addEventListener('click', () => {
-  if (requiredCheck && !document.getElementById('customerName').value.trim() || !document.getElementById('characterDetail').value.trim()) {
-    alert('กรุณากรอกข้อมูลที่จำเป็น');
-    return;
-  }
-
-  previewContent.innerHTML = '';
-
-  const name = document.getElementById('customerName').value.trim();
-  const charName = document.getElementById('characterName').value.trim();
-  const details = document.getElementById('characterDetail').value.trim();
-  const focus = document.getElementById('characterFocus').value.trim();
-
-  previewContent.innerHTML += `<p><strong>ชื่อผู้จ้าง:</strong><br>${name}</p>`;
-  previewContent.innerHTML += `<p><strong>ชื่อตัวละคร:</strong><br>${charName}</p>`;
-  previewContent.innerHTML += `<p><strong>รายละเอียดตัวละคร:</strong><br>${details}</p>`;
-  previewContent.innerHTML += `<p><strong>สิ่งที่ต้องเน้น:</strong><br>${focus}</p>`;
-
-  if (images.length > 0) {
-    const imgWrapper = document.createElement('div');
-    imgWrapper.className = 'd-flex flex-wrap gap-2';
-    images.forEach((container) => {
-      const imgClone = container.querySelector('img').cloneNode(true);
-      imgClone.style.border = '1px solid #ccc';
-      imgWrapper.appendChild(imgClone);
-    });
-    previewContent.appendChild(imgWrapper);
-  }
-
-  previewSection.classList.remove('d-none');
-  downloadBtn.disabled = false;
-  copyBtn.disabled = false;
-});
-
-downloadBtn.addEventListener('click', () => {
+// Handle download image as JPG
+document.getElementById("downloadBtn").addEventListener("click", function () {
+  const previewContent = document.getElementById("previewContent");
   html2canvas(previewContent).then(canvas => {
-    const link = document.createElement('a');
-    link.download = 'character_details.jpg';
-    link.href = canvas.toDataURL('image/jpeg');
+    const image = canvas.toDataURL("image/jpeg");
+    const link = document.createElement("a");
+    link.href = image;
+    link.download = "character-details.jpg";
     link.click();
   });
 });
 
-copyBtn.addEventListener('click', () => {
+// Handle copy to clipboard
+document.getElementById("copyBtn").addEventListener("click", function () {
+  const previewContent = document.getElementById("previewContent");
   html2canvas(previewContent).then(canvas => {
     canvas.toBlob(blob => {
-      navigator.clipboard.write([
-        new ClipboardItem({ 'image/png': blob })
-      ]);
+      const data = [new ClipboardItem({ "image/jpeg": blob })];
+      navigator.clipboard.write(data).then(() => {
+        alert("ภาพได้ถูกคัดลอกไปที่คลิปบอร์ด");
+      });
     });
   });
 });
