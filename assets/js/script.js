@@ -1,93 +1,134 @@
-document.getElementById('imageUpload').addEventListener('change', handleImageUpload);
-document.getElementById('previewBtn').addEventListener('click', generatePreview);
-document.getElementById('downloadBtn').addEventListener('click', downloadImage);
-document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
+ const uploadedImages = [];
 
-let uploadedImages = [];
-
-function handleImageUpload(event) {
-  const files = event.target.files;
-  const previewContainer = document.getElementById('imagePreview');
-  previewContainer.innerHTML = '';
-
-  for (const file of files) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      const img = new Image();
-      img.src = e.target.result;
-      img.classList.add('img-fluid', 'preview-image');
-      img.setAttribute('data-index', uploadedImages.length);
-
-      // Create a remove button for each image
-      const removeBtn = document.createElement('button');
-      removeBtn.textContent = 'Remove';
-      removeBtn.classList.add('btn', 'btn-danger', 'remove-btn');
-      removeBtn.onclick = function () {
-        removeImage(img, uploadedImages.length);
+  document.getElementById('upload').addEventListener('change', function(e) {
+    const files = e.target.files;
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const MAX_WIDTH = 800;
+          const scaleSize = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleSize;
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const compressedData = canvas.toDataURL('image/jpeg', 0.7);
+          uploadedImages.push(compressedData);
+          renderImageGallery();
+        };
       };
-
-      // Append image and remove button
-      const imgWrapper = document.createElement('div');
-      imgWrapper.classList.add('preview-wrapper');
-      imgWrapper.appendChild(img);
-      imgWrapper.appendChild(removeBtn);
-      previewContainer.appendChild(imgWrapper);
-
-      // Add image to the uploadedImages array
-      uploadedImages.push(img);
-    };
-    reader.readAsDataURL(file);
-  }
-}
-
-function removeImage(img, index) {
-  const previewContainer = document.getElementById('imagePreview');
-  previewContainer.removeChild(img.parentElement);  // Remove image wrapper
-
-  // Remove the image from the array
-  uploadedImages.splice(index, 1);
-}
-
-function generatePreview() {
-  const previewContent = document.getElementById('previewContent');
-  const previewSection = document.getElementById('previewSection');
-
-  previewContent.innerHTML = '';
-  uploadedImages.forEach((img) => {
-    const imgClone = img.cloneNode();
-    imgClone.style.width = 'auto';
-    imgClone.style.height = 'auto';  // Show original size, but will be compressed
-    previewContent.appendChild(imgClone);
-  });
-
-  previewSection.classList.remove('d-none');
-  document.getElementById('downloadBtn').disabled = false;
-  document.getElementById('copyBtn').disabled = false;
-}
-
-function downloadImage() {
-  html2canvas(document.getElementById('previewContent'), {
-    backgroundColor: null,
-    scale: 1,  // Adjust scale for compression
-  }).then(function (canvas) {
-    const img = canvas.toDataURL('image/jpeg', 0.7);  // Compress to JPEG at 70% quality
-    const link = document.createElement('a');
-    link.href = img;
-    link.download = 'character_preview.jpg';
-    link.click();
-  });
-}
-
-function copyToClipboard() {
-  html2canvas(document.getElementById('previewContent'), {
-    backgroundColor: null,
-    scale: 1,
-  }).then(function (canvas) {
-    canvas.toBlob(function (blob) {
-      const item = new ClipboardItem({
-        'image/png': blob,
-      });
-      navigator.clipboard.write([item]);
+      reader.readAsDataURL(file);
     });
   });
-}
+
+  function renderImageGallery() {
+    const gallery = document.getElementById('imageGallery');
+    gallery.innerHTML = '';
+    uploadedImages.forEach((src, index) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'image-thumb';
+      wrapper.setAttribute('data-index', index);
+      wrapper.innerHTML = `
+        <img src="${src}" alt="Uploaded Image ${index + 1}" data-index="${index}">
+        <button class="remove-btn" onclick="removeImage(${index})">&times;</button>
+      `;
+      gallery.appendChild(wrapper);
+    });
+
+    // Initialize SortableJS to make the images draggable and reorderable
+    new Sortable(gallery, {
+      onEnd(evt) {
+        const movedImage = uploadedImages.splice(evt.oldIndex, 1)[0];
+        uploadedImages.splice(evt.newIndex, 0, movedImage);
+        renderImageGallery();
+      }
+    });
+  }
+
+  function removeImage(index) {
+    uploadedImages.splice(index, 1);
+    renderImageGallery();
+  }
+
+  function validateForm() {
+    const name = document.getElementById('customerName').value.trim();
+    const desc = document.getElementById('characterDetail').value.trim();
+    return name && desc;
+  }
+
+  function generatePreview() {
+    if (!validateForm()) {
+      alert("กรุณากรอกข้อมูลให้ครบ");
+      return;
+    }
+
+    const name = document.getElementById('customerName').value;
+    const characterName = document.getElementById('characterName').value;
+    const desc = document.getElementById('characterDetail').value;
+    const focus = document.getElementById('characterFocus').value;
+
+    const preview = document.getElementById('previewContent');
+    preview.innerHTML = `
+      <h4>รายละเอียดตัวละคร</h4>
+      <p><strong>ชื่อผู้จ้าง:</strong> ${name}</p>
+      ${characterName ? `<p><strong>ชื่อตัวละคร:</strong> ${characterName}</p>` : ''}
+      <p><strong>รายละเอียดตัวละคร:</strong><br>${desc.replace(/\n/g, '<br>')}</p>
+      ${focus ? `<p><strong>สิ่งที่ต้องเน้น:</strong><br>${focus.replace(/\n/g, '<br>')}</p>` : ''}
+    `;
+
+    uploadedImages.forEach((src, index) => {
+      const imageLabel = document.createElement('p');
+      imageLabel.innerHTML = `<strong>ภาพที่ ${index + 1}</strong>`;
+      const img = document.createElement('img');
+      img.src = src;
+      preview.appendChild(imageLabel);
+      preview.appendChild(img);
+    });
+
+    preview.style.display = 'block';
+  }
+
+  function saveAsImage() {
+    if (!validateForm()) {
+      alert("กรุณาแสดงตัวอย่างก่อนบันทึกภาพ");
+      return;
+    }
+
+    const preview = document.getElementById('previewContent');
+    if (!preview.style.display || preview.style.display === 'none') {
+      alert("กรุณาแสดงตัวอย่างก่อนบันทึกภาพ");
+      return;
+    }
+
+    html2canvas(preview).then(canvas => {
+      const link = document.createElement('a');
+      link.download = 'quotation.jpg';
+      link.href = canvas.toDataURL('image/jpeg');
+      link.click();
+    });
+  }
+
+  function copyToClipboard() {
+    if (!validateForm()) {
+      alert("กรุณาแสดงตัวอย่างก่อนคัดลอกภาพ");
+      return;
+    }
+
+    const preview = document.getElementById('previewContent');
+    if (!preview.style.display || preview.style.display === 'none') {
+      alert("กรุณาแสดงตัวอย่างก่อนคัดลอกภาพ");
+      return;
+    }
+
+    html2canvas(preview).then(canvas => {
+      canvas.toBlob(blob => {
+        const item = new ClipboardItem({ 'image/png': blob });
+        navigator.clipboard.write([item]).then(() => {
+          alert("คัดลอกภาพไปยังคลิปบอร์ดสำเร็จ!");
+        });
+      });
+    });
+  }
