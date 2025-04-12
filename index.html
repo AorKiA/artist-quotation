@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ใบเสนอราคาค่าคอมมิชชัน</title>
+  <title>แบบฟอร์มรายละเอียดตัวละคร</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
@@ -44,7 +44,7 @@
   <div class="container my-5">
     <div class="card shadow">
       <div class="card-body">
-        <h2 class="card-title mb-4">แบบฟอร์มใบเสนอราคาค่าคอมมิชชัน</h2>
+        <h2 class="card-title mb-4">แบบฟอร์มรายละเอียดตัวละคร</h2>
         <form id="quoteForm">
           <div class="mb-3">
             <label for="name" class="form-label">ชื่อผู้จ้าง*</label>
@@ -74,7 +74,7 @@
 
           <div class="form-check mb-3">
             <input class="form-check-input" type="checkbox" id="tos" required>
-            <label class="form-check-label" for="tos">ยอมรับเงื่อนไขและข้อตกลง (TOS)</label>
+            <label class="form-check-label" for="tos" data-bs-toggle="modal" data-bs-target="#tosModal">ยอมรับเงื่อนไขและข้อตกลง (TOS)</label>
           </div>
 
           <button type="button" class="btn btn-primary me-2" onclick="generatePreview()">แสดงตัวอย่าง</button>
@@ -83,6 +83,29 @@
         </form>
 
         <div class="preview-area mt-4 p-3 border rounded bg-light" id="preview" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOS Modal -->
+  <div class="modal fade" id="tosModal" tabindex="-1" aria-labelledby="tosModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tosModalLabel">เงื่อนไขการใช้งาน</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>เงื่อนไขการใช้งาน:</strong></p>
+          <ul>
+            <li>ใช้สำหรับแปลงฟอร์มเป็นภาพเท่านั้น</li>
+            <li>ไม่มีค่าใช้จ่าย</li>
+            <li>ไม่ได้เก็บข้อมูลของผู้ใช้</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+        </div>
       </div>
     </div>
   </div>
@@ -154,16 +177,19 @@
 
       const preview = document.getElementById('preview');
       preview.innerHTML = `
-        <h4>ใบเสนอราคา</h4>
+        <h4>รายละเอียดตัวละคร</h4>
         <p><strong>ชื่อผู้จ้าง:</strong> ${name}</p>
         ${characterName ? `<p><strong>ชื่อตัวละคร:</strong> ${characterName}</p>` : ''}
         <p><strong>รายละเอียดตัวละคร:</strong><br>${desc.replace(/\n/g, '<br>')}</p>
         ${focus ? `<p><strong>สิ่งที่ต้องเน้น:</strong><br>${focus.replace(/\n/g, '<br>')}</p>` : ''}
       `;
 
-      uploadedImages.forEach(src => {
+      uploadedImages.forEach((src, index) => {
+        const imageLabel = document.createElement('p');
+        imageLabel.innerHTML = `<strong>ภาพที่ ${index + 1}</strong>`;
         const img = document.createElement('img');
         img.src = src;
+        preview.appendChild(imageLabel);
         preview.appendChild(img);
       });
 
