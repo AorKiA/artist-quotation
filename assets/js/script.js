@@ -1,96 +1,106 @@
-const form = document.getElementById('characterForm');
+// script.js
+
+let images = [];
+
+const imageUpload = document.getElementById('imageUpload');
+const imagePreview = document.getElementById('imagePreview');
 const previewBtn = document.getElementById('previewBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 const copyBtn = document.getElementById('copyBtn');
-const previewSection = document.getElementById('previewSection');
 const previewContent = document.getElementById('previewContent');
-const imageUpload = document.getElementById('imageUpload');
-const imagePreview = document.getElementById('imagePreview');
+const previewSection = document.getElementById('previewSection');
 
-let previewGenerated = false;
-const validateRequired = true;
+const requiredCheck = true;
 
-// Handle image preview
-imageUpload.addEventListener('change', () => {
-  imagePreview.innerHTML = '';
-  [...imageUpload.files].forEach((file, index) => {
+imageUpload.addEventListener('change', (e) => {
+  const files = Array.from(e.target.files);
+  for (const file of files) {
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = (event) => {
+      const imgContainer = document.createElement('div');
+      imgContainer.className = 'position-relative';
+
       const img = document.createElement('img');
-      img.src = e.target.result;
+      img.src = event.target.result;
       img.className = 'img-thumbnail';
-      img.style.maxWidth = '120px';
-      img.style.border = '1px solid #ccc';
-      img.style.cursor = 'move';
-      img.setAttribute('data-index', index);
-      const wrapper = document.createElement('div');
-      wrapper.className = 'sortable-img';
-      wrapper.appendChild(img);
-      imagePreview.appendChild(wrapper);
+      img.style.maxWidth = '100px';
+
+      const removeBtn = document.createElement('button');
+      removeBtn.innerText = '✕';
+      removeBtn.className = 'btn btn-sm btn-danger position-absolute top-0 end-0';
+      removeBtn.addEventListener('click', () => {
+        const index = images.findIndex(i => i === imgContainer);
+        if (index > -1) {
+          images.splice(index, 1);
+        }
+        imgContainer.remove();
+      });
+
+      imgContainer.appendChild(img);
+      imgContainer.appendChild(removeBtn);
+      imagePreview.appendChild(imgContainer);
+      images.push(imgContainer);
     };
     reader.readAsDataURL(file);
-  });
+  }
 });
 
-// Enable SortableJS on imagePreview
-Sortable.create(imagePreview, {
-  animation: 150
+new Sortable(imagePreview, {
+  animation: 150,
+  onEnd: () => {
+    images = Array.from(imagePreview.children);
+  }
 });
 
-// Create preview content
-function generatePreview() {
-  const customer = document.getElementById('customerName').value.trim();
-  const charName = document.getElementById('characterName').value.trim();
-  const detail = document.getElementById('characterDetail').value.trim();
-  const focus = document.getElementById('characterFocus').value.trim();
-
-  if (validateRequired && (!customer || !detail)) {
+previewBtn.addEventListener('click', () => {
+  if (requiredCheck && !document.getElementById('customerName').value.trim() || !document.getElementById('characterDetail').value.trim()) {
     alert('กรุณากรอกข้อมูลที่จำเป็น');
     return;
   }
 
-  previewContent.innerHTML = `
-    <p><strong>ชื่อผู้จ้าง:</strong> ${customer}</p>
-    <p><strong>ชื่อตัวละคร:</strong> ${charName || '-'}</p>
-    <p><strong>รายละเอียดตัวละคร:</strong><br>${detail.replace(/\n/g, '<br>')}</p>
-    <p><strong>จุดที่ต้องเน้น:</strong><br>${focus.replace(/\n/g, '<br>') || '-'}</p>
-    <div class="d-flex flex-wrap gap-2 mt-3">
-      ${[...imagePreview.querySelectorAll('img')].map(img => `
-        <img src="${img.src}" class="img-thumbnail" style="max-width: 120px; border: 1px solid #ccc;">
-      `).join('')}
-    </div>
-  `;
+  previewContent.innerHTML = '';
+
+  const name = document.getElementById('customerName').value.trim();
+  const charName = document.getElementById('characterName').value.trim();
+  const details = document.getElementById('characterDetail').value.trim();
+  const focus = document.getElementById('characterFocus').value.trim();
+
+  previewContent.innerHTML += `<p><strong>ชื่อผู้จ้าง:</strong><br>${name}</p>`;
+  previewContent.innerHTML += `<p><strong>ชื่อตัวละคร:</strong><br>${charName}</p>`;
+  previewContent.innerHTML += `<p><strong>รายละเอียดตัวละคร:</strong><br>${details}</p>`;
+  previewContent.innerHTML += `<p><strong>สิ่งที่ต้องเน้น:</strong><br>${focus}</p>`;
+
+  if (images.length > 0) {
+    const imgWrapper = document.createElement('div');
+    imgWrapper.className = 'd-flex flex-wrap gap-2';
+    images.forEach((container) => {
+      const imgClone = container.querySelector('img').cloneNode(true);
+      imgClone.style.border = '1px solid #ccc';
+      imgWrapper.appendChild(imgClone);
+    });
+    previewContent.appendChild(imgWrapper);
+  }
+
   previewSection.classList.remove('d-none');
   downloadBtn.disabled = false;
   copyBtn.disabled = false;
-  previewGenerated = true;
-}
+});
 
-// Download image
-function downloadImage() {
-  if (!previewGenerated) return;
+downloadBtn.addEventListener('click', () => {
   html2canvas(previewContent).then(canvas => {
     const link = document.createElement('a');
-    link.download = 'character-details.jpg';
-    link.href = canvas.toDataURL('image/jpeg', 1.0);
+    link.download = 'character_details.jpg';
+    link.href = canvas.toDataURL('image/jpeg');
     link.click();
   });
-}
+});
 
-// Copy image to clipboard
-function copyImage() {
-  if (!previewGenerated) return;
+copyBtn.addEventListener('click', () => {
   html2canvas(previewContent).then(canvas => {
     canvas.toBlob(blob => {
       navigator.clipboard.write([
         new ClipboardItem({ 'image/png': blob })
-      ]).then(() => {
-        alert('คัดลอกภาพเรียบร้อยแล้ว');
-      });
+      ]);
     });
   });
-}
-
-previewBtn.addEventListener('click', generatePreview);
-downloadBtn.addEventListener('click', downloadImage);
-copyBtn.addEventListener('click', copyImage);
+});
