@@ -68,7 +68,7 @@
 
           <div class="mb-3">
             <label class="form-label">ภาพประกอบ</label>
-            <input type="file" class="form-control" id="upload" accept="image/*">
+            <input type="file" class="form-control" id="upload" accept="image/*" multiple>
             <div id="imageGallery" class="mt-2 d-flex flex-wrap"></div>
           </div>
 
@@ -77,8 +77,9 @@
             <label class="form-check-label" for="tos">ยอมรับเงื่อนไขและข้อตกลง (TOS)</label>
           </div>
 
-          <button type="button" class="btn btn-primary me-2" onclick="generatePreview()">แสดงตัวอย่างก่อนพิมพ์</button>
-          <button type="button" class="btn btn-success" onclick="printQuote()" disabled id="printBtn">พิมพ์เป็น PNG</button>
+          <button type="button" class="btn btn-primary me-2" onclick="generatePreview()">แสดงตัวอย่าง</button>
+          <button type="button" class="btn btn-success me-2" onclick="saveAsImage()" id="saveBtn">บันทึกภาพ</button>
+          <button type="button" class="btn btn-secondary" onclick="copyToClipboard()" id="copyBtn">คัดลอกเป็นภาพ</button>
         </form>
 
         <div class="preview-area mt-4 p-3 border rounded bg-light" id="preview" style="display:none;"></div>
@@ -91,16 +92,27 @@
     const uploadedImages = [];
 
     document.getElementById('upload').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
+      const files = e.target.files;
+      Array.from(files).forEach(file => {
         const reader = new FileReader();
         reader.onload = function(event) {
-          const imageData = event.target.result;
-          uploadedImages.push(imageData);
-          renderImageGallery();
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const MAX_WIDTH = 800;
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const compressedData = canvas.toDataURL('image/jpeg', 0.7);
+            uploadedImages.push(compressedData);
+            renderImageGallery();
+          };
         };
         reader.readAsDataURL(file);
-      }
+      });
     });
 
     function renderImageGallery() {
@@ -122,17 +134,23 @@
       renderImageGallery();
     }
 
+    function validateForm() {
+      const name = document.getElementById('name').value.trim();
+      const desc = document.getElementById('desc').value.trim();
+      const tos = document.getElementById('tos').checked;
+      return name && desc && tos;
+    }
+
     function generatePreview() {
+      if (!validateForm()) {
+        alert("กรุณากรอกข้อมูลให้ครบและยอมรับเงื่อนไขก่อน");
+        return;
+      }
+
       const name = document.getElementById('name').value;
       const characterName = document.getElementById('characterName').value;
       const desc = document.getElementById('desc').value;
       const focus = document.getElementById('focus').value;
-      const tos = document.getElementById('tos').checked;
-
-      if (!tos) {
-        alert("กรุณายอมรับเงื่อนไขก่อนพิมพ์");
-        return;
-      }
 
       const preview = document.getElementById('preview');
       preview.innerHTML = `
@@ -150,16 +168,42 @@
       });
 
       preview.style.display = 'block';
-      document.getElementById('printBtn').disabled = false;
     }
 
-    function printQuote() {
+    function saveAsImage() {
+      if (!validateForm()) {
+        alert("กรุณาแสดงตัวอย่างก่อนบันทึกภาพ");
+        return;
+      }
       const preview = document.getElementById('preview');
+      if (preview.style.display === 'none') {
+        alert("กรุณาแสดงตัวอย่างก่อนบันทึกภาพ");
+        return;
+      }
       html2canvas(preview).then(canvas => {
         const link = document.createElement('a');
-        link.download = 'quotation.png';
-        link.href = canvas.toDataURL();
+        link.download = 'quotation.jpg';
+        link.href = canvas.toDataURL('image/jpeg');
         link.click();
+      });
+    }
+
+    function copyToClipboard() {
+      if (!validateForm()) {
+        alert("กรุณาแสดงตัวอย่างก่อนคัดลอกภาพ");
+        return;
+      }
+      const preview = document.getElementById('preview');
+      if (preview.style.display === 'none') {
+        alert("กรุณาแสดงตัวอย่างก่อนคัดลอกภาพ");
+        return;
+      }
+      html2canvas(preview).then(canvas => {
+        canvas.toBlob(blob => {
+          const item = new ClipboardItem({ 'image/png': blob });
+          navigator.clipboard.write([item]);
+          alert("คัดลอกภาพไปยังคลิปบอร์ดแล้ว");
+        });
       });
     }
   </script>
