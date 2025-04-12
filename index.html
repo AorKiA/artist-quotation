@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>แบบฟอร์มรายละเอียดตัวละคร</title>
+  <title>ใบเสนอราคาค่าคอมมิชชัน</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai&display=swap" rel="stylesheet">
   <style>
     body {
       background: #f4f4f4;
+      font-family: 'Noto Sans Thai', sans-serif;
     }
     .preview-area img {
       max-width: 100%;
@@ -37,6 +39,9 @@
       height: 20px;
       font-size: 12px;
       cursor: pointer;
+    }
+    .modal-content {
+      font-family: 'Noto Sans Thai', sans-serif;
     }
   </style>
 </head>
@@ -79,7 +84,7 @@
 
           <button type="button" class="btn btn-primary me-2" onclick="generatePreview()">แสดงตัวอย่าง</button>
           <button type="button" class="btn btn-success me-2" onclick="saveAsImage()" id="saveBtn">บันทึกภาพ</button>
-          <button type="button" class="btn btn-secondary" onclick="copyToClipboard()" id="copyBtn">Copy to clipboard</button>
+          <button type="button" class="btn btn-secondary" onclick="copyToClipboard()" id="copyBtn">Copy to Clipboard</button>
         </form>
 
         <div class="preview-area mt-4 p-3 border rounded bg-light" id="preview" style="display:none;"></div>
@@ -96,9 +101,8 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p><strong>เงื่อนไขการใช้งาน:</strong></p>
           <ul>
-            <li>ใช้สำหรับแปลงฟอร์มเป็นภาพเท่านั้น</li>
+            <li>ใช้สำหรับแปลงฟอร์มเป็นภาพ เท่านั้น</li>
             <li>ไม่มีค่าใช้จ่าย</li>
             <li>ไม่ได้เก็บข้อมูลของผู้ใช้</li>
           </ul>
@@ -113,6 +117,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script>
     const uploadedImages = [];
+    let requiredFields = true; // Variable to control required field validation
 
     document.getElementById('upload').addEventListener('change', function(e) {
       const files = e.target.files;
@@ -165,7 +170,7 @@
     }
 
     function generatePreview() {
-      if (!validateForm()) {
+      if (requiredFields && !validateForm()) {
         alert("กรุณากรอกข้อมูลให้ครบและยอมรับเงื่อนไขก่อน");
         return;
       }
@@ -197,7 +202,7 @@
     }
 
     function saveAsImage() {
-      if (!validateForm()) {
+      if (requiredFields && !validateForm()) {
         alert("กรุณาแสดงตัวอย่างก่อนบันทึกภาพ");
         return;
       }
@@ -215,7 +220,7 @@
     }
 
     function copyToClipboard() {
-      if (!validateForm()) {
+      if (requiredFields && !validateForm()) {
         alert("กรุณาแสดงตัวอย่างก่อนคัดลอกภาพ");
         return;
       }
@@ -227,11 +232,13 @@
       html2canvas(preview).then(canvas => {
         canvas.toBlob(blob => {
           const item = new ClipboardItem({ 'image/png': blob });
-          navigator.clipboard.write([item]);
-          alert("คัดลอกภาพไปยังคลิปบอร์ดแล้ว");
+          navigator.clipboard.write([item]).then(() => {
+            alert("คัดลอกภาพไปยังคลิปบอร์ดสำเร็จ!");
+          });
         });
       });
     }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
